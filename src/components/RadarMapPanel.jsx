@@ -1,39 +1,91 @@
 /**
- * @fileoverview RadarMapPanel — Leaflet map with NASA GIBS MODIS true-colour overlay.
+ * @fileoverview RadarMapPanel — Leaflet map with real weather overlays.
  *
- * Requires react-leaflet and leaflet to be installed (npm install leaflet react-leaflet).
- * Leaflet CSS is imported globally in index.css.
+ * Weather layers (no API key required):
+ *   - RainViewer: Live global precipitation radar (fetches its own timestamps)
+ *   - NASA GIBS:  MODIS Terra True Colour satellite imagery (with correct date)
  *
- * Data source: NASA Global Imagery Browse Services (GIBS)
- * https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/gibs
+ * Base maps:
+ *   - OpenStreetMap (default — works best with weather overlays)
+ *   - CartoDB Dark  (great for seeing precipitation colours)
  */
 
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, WMSTileLayer, LayersControl, useMap } from 'react-leaflet';
+import { useEffect, useState, useRef } from 'react';
+import {
+    MapContainer, TileLayer, LayersControl, useMap,
+} from 'react-leaflet';
 
 const { BaseLayer, Overlay } = LayersControl;
 
-// Default map centre: world overview
 const DEFAULT_CENTER = [20, 0];
 const DEFAULT_ZOOM = 2;
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+/** Returns yesterday's date as 'YYYY-MM-DD' (GIBS availability lags ~1–2 days). */
+function gibs_date() {
+    const d = new Date();
+    d.setDate(d.getDate() - 2); // 2-day lag for MODIS availability
+    return d.toISOString().slice(0, 10);
+}
+
 /**
- * Inner component that flies to a new location when it changes.
- * Must be rendered inside a <MapContainer>.
+ * Fetches the latest available RainViewer radar timestamp list.
+ * Docs: https://www.rainviewer.com/api/weather-maps.html
  */
+async function fetchRainViewerUrl() {
+    const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+    if (!res.ok) throw new Error('RainViewer API unreachable');
+    const data = await res.json();
+    // Use the most recent past frame
+    const frames = data.radar?.past ?? [];
+    if (!frames.length) throw new Error('No radar frames available');
+    const latest = frames[frames.length - 1];
+    // Returns tile URL template; size=512 for high-res
+    return `https://tilecache.rainviewer.com${latest.path}/512/{z}/{x}/{y}/2/1_1.png`;
+}
+
+// ── MapController: fly-to on location change ──────────────────────────────────
+
 function MapController({ center }) {
     const map = useMap();
     useEffect(() => {
         if (center) {
-            try {
-                map.flyTo(center, 5, { duration: 1.5 });
-            } catch {
-                // Silently ignore if map is not yet fully visible/mounted
-            }
+            try { map.flyTo(center, 5, { duration: 1.5 }); } catch { /* ignore */ }
         }
     }, [map, center]);
     return null;
 }
+
+// ── RainViewerLayer: fetches timestamps and renders ───────────────────────────
+
+function RainViewerLayer() {
+    const [tileUrl, setTileUrl] = useState(null);
+    const [error, setError] = useState(false);
+    const fetched = useRef(false);
+
+    useEffect(() => {
+        if (fetched.current) return;
+        fetched.current = true;
+        fetchRainViewerUrl()
+            .then(setTileUrl)
+            .catch(() => setError(true));
+    }, []);
+
+    if (error || !tileUrl) return null;
+
+    return (
+        <TileLayer
+            url={tileUrl}
+            opacity={0.7}
+            attribution='Radar: <a href="https://www.rainviewer.com" target="_blank">RainViewer</a>'
+            tileSize={512}
+            zoomOffset={-1}
+        />
+    );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 /**
  * @param {{
@@ -43,18 +95,18 @@ function MapController({ center }) {
  */
 export default function RadarMapPanel({ center, locationName }) {
     const mapCenter = center ?? DEFAULT_CENTER;
+    const gibsDate = gibs_date();
 
     return (
         <section className="panel radar-panel">
             <div className="radar-header">
                 <h2>Weather Radar Map</h2>
-                <span className="radar-badge">Live NASA Imagery</span>
+                <span className="radar-badge">Live Precipitation</span>
             </div>
             <p className="hint">
-                {locationName
-                    ? `Showing area around ${locationName}. `
-                    : 'Global view. '}
-                Overlay: MODIS Terra True Colour (NASA GIBS) — updated daily.
+                {locationName ? `Showing area around ${locationName}. ` : 'Global view. '}
+                Base layer: precipitation radar via RainViewer (updated ~10 min).
+                Toggle layers ↗ to switch to NASA satellite view.
             </p>
 
             <div className="map-container">
@@ -68,7 +120,8 @@ export default function RadarMapPanel({ center, locationName }) {
                     <MapController center={center ?? null} />
 
                     <LayersControl position="topright">
-                        {/* ── Base layers ──────────────────────────────────────────────── */}
+
+                        {/* ── Base layers ─────────────────────────────────────────────── */}
                         <BaseLayer checked name="OpenStreetMap">
                             <TileLayer
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -85,62 +138,45 @@ export default function RadarMapPanel({ center, locationName }) {
                             />
                         </BaseLayer>
 
-                        {/* ── NASA GIBS Overlays ────────────────────────────────────────── */}
-                        <Overlay checked name="MODIS Terra True Colour (NASA)">
-                            <WMSTileLayer
-                                url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
-                                layers="MODIS_Terra_CorrectedReflectance_TrueColor"
-                                format="image/jpeg"
-                                transparent={false}
-                                attribution='Imagery courtesy of <a href="https://earthdata.nasa.gov/eosdis/science-system-description/eosdis-components/gibs">NASA GIBS</a>'
-                                opacity={0.85}
+                        {/* ── Weather overlays ─────────────────────────────────────────── */}
+
+                        {/* LIVE precipitation radar — RainViewer (no API key needed) */}
+                        <Overlay checked name="🌧 Precipitation Radar (RainViewer)">
+                            <RainViewerLayer />
+                        </Overlay>
+
+                        {/* NASA GIBS daily satellite cloud/surface view (with correct date) */}
+                        <Overlay name={`🛰 MODIS Cloud View – NASA (${gibsDate})`}>
+                            <TileLayer
+                                url={`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${gibsDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`}
+                                attribution='Imagery <a href="https://earthdata.nasa.gov">NASA GIBS</a>'
+                                opacity={0.8}
                                 maxZoom={9}
+                                maxNativeZoom={9}
                             />
                         </Overlay>
 
-                        <Overlay name="VIIRS Day/Night Band (NASA)">
-                            <WMSTileLayer
-                                url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
-                                layers="VIIRS_Black_Marble"
-                                format="image/png"
-                                transparent
-                                attribution='Imagery courtesy of <a href="https://earthdata.nasa.gov">NASA</a>'
-                                opacity={0.7}
-                                maxZoom={8}
-                            />
-                        </Overlay>
-
-                        <Overlay name="MODIS Aqua True Colour (NASA)">
-                            <WMSTileLayer
-                                url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
-                                layers="MODIS_Aqua_CorrectedReflectance_TrueColor"
-                                format="image/jpeg"
-                                transparent={false}
-                                attribution='Imagery courtesy of <a href="https://earthdata.nasa.gov">NASA</a>'
-                                opacity={0.85}
-                                maxZoom={9}
-                            />
-                        </Overlay>
                     </LayersControl>
                 </MapContainer>
             </div>
 
+            {/* Legend */}
             <div className="radar-legend">
                 <div className="legend-item">
-                    <span className="legend-swatch" style={{ background: '#e8f4fd' }} />
-                    Cloud / Snow
+                    <span className="legend-swatch" style={{ background: '#38bdf8' }} />
+                    Light rain
                 </div>
                 <div className="legend-item">
-                    <span className="legend-swatch" style={{ background: '#2d6a9f' }} />
-                    Ocean
+                    <span className="legend-swatch" style={{ background: '#2563eb' }} />
+                    Moderate rain
                 </div>
                 <div className="legend-item">
-                    <span className="legend-swatch" style={{ background: '#4a7c59' }} />
-                    Vegetation
+                    <span className="legend-swatch" style={{ background: '#7c3aed' }} />
+                    Heavy rain
                 </div>
                 <div className="legend-item">
-                    <span className="legend-swatch" style={{ background: '#c8a96e' }} />
-                    Desert / Bare
+                    <span className="legend-swatch" style={{ background: '#dc2626' }} />
+                    Extreme
                 </div>
             </div>
         </section>
