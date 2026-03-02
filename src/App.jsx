@@ -9,7 +9,7 @@
  * - Tab navigation: Dashboard | Radar Map
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 import LocationPanel from './components/LocationPanel.jsx';
@@ -44,12 +44,15 @@ function App() {
   const [resolvedCoords, setResolvedCoords] = useState(null); // [lat, lon] | null
   const [resolvedName, setResolvedName] = useState(null);
 
-  // ── Tab state ──────────────────────────────────────────────────────────────
-  /** @type {[Tab, React.Dispatch<React.SetStateAction<Tab>>]} */
+  // ── Tab & dark mode state ──────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('dashboard');
-  // Lazy-mount the radar panel: only render once first visited so Leaflet
-  // doesn't initialise inside a display:none container on first compute.
   const [hasSeenRadar, setHasSeenRadar] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Sync dark class to <html> so CSS variables cascade
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   function switchTab(tab) {
     setActiveTab(tab);
@@ -103,26 +106,40 @@ function App() {
       <header className="app-header">
         <div className="header-inner">
           <div className="header-logo">
-            <svg viewBox="0 0 40 40" fill="none" className="logo-svg" aria-hidden="true">
-              <circle cx="20" cy="20" r="8" stroke="currentColor" strokeWidth="2.5" fill="none" />
-              {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
-                const r1 = 12, r2 = 16;
-                const rad = (deg * Math.PI) / 180;
-                return (
-                  <line key={deg}
-                    x1={20 + r1 * Math.cos(rad)} y1={20 + r1 * Math.sin(rad)}
-                    x2={20 + r2 * Math.cos(rad)} y2={20 + r2 * Math.sin(rad)}
-                    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                );
-              })}
-            </svg>
+            <img src="/logo.png" alt="Weather App logo" className="logo-img" />
           </div>
-          <div>
-            <h1>Weather Likelihood Dashboard</h1>
+          <div className="header-text">
+            <h1>Weather App</h1>
             <p className="subtitle">
-              Historical climate probabilities powered by NASA POWER — not a forecast, but a climatological view.
+              Historical climate probabilities powered by NASA POWER.
             </p>
           </div>
+          {/* Dark mode toggle */}
+          <button
+            className="dark-toggle"
+            onClick={() => setDarkMode((d) => !d)}
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to night mode'}
+            title={darkMode ? 'Light mode' : 'Night mode'}
+          >
+            {darkMode ? (
+              // Sun icon
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" />
+                {[0, 45, 90, 135, 180, 225, 270, 315].map(d => {
+                  const r = (d * Math.PI) / 180;
+                  return <line key={d} x1={12 + 7.5 * Math.cos(r)} y1={12 + 7.5 * Math.sin(r)}
+                    x2={12 + 9.5 * Math.cos(r)} y2={12 + 9.5 * Math.sin(r)}
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" />;
+                })}
+              </svg>
+            ) : (
+              // Moon icon
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
         </div>
 
         {/* ── Tab bar ─────────────────────────────────────────────────────── */}
