@@ -1,13 +1,17 @@
-/* ── Google Fonts ─────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-/* ── Leaflet CSS (required by react-leaflet) ─────────────────────────────── */
+/* ── Google Fonts ──────────────────────────────────────────────────────────
+   Removed: using system-UI stack per monochrome design direction.
+   Leaflet CSS stays — required by react-leaflet.                           */
 @import 'leaflet/dist/leaflet.css';
 
-/* ── CSS Custom Properties ───────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   MONOCHROME DESIGN SYSTEM
+   Palette: white · light greys · mid greys · dark greys · near-black
+   ══════════════════════════════════════════════════════════════════════════ */
+
 :root {
   /* Typography */
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue',
+    Arial, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   font-weight: 400;
@@ -16,48 +20,68 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Colour palette — deep ocean weather theme */
-  --bg-primary:    #07111f;
-  --bg-secondary:  #0d1f35;
-  --bg-glass:      rgba(13, 31, 53, 0.72);
-  --bg-glass-hover: rgba(18, 40, 68, 0.85);
+  /* ── Monochrome palette ───────────────────────────────────────────────── */
+  --bg-app: #f4f4f5;
+  /* page / outer background                    */
+  --bg-surface: #ffffff;
+  /* panel cards                                */
+  --bg-subtle: #f9f9fa;
+  /* inner tinted areas (summary boxes, etc.)   */
+  --bg-hover: #f1f1f2;
+  /* hover on interactive rows                  */
+  --bg-selected: #e8e8ea;
+  /* active/selected state                      */
 
-  --border-color:  rgba(56, 217, 245, 0.15);
-  --border-hover:  rgba(56, 217, 245, 0.35);
+  --text-primary: #111112;
+  /* headings, strong labels                    */
+  --text-secondary: #4a4a52;
+  /* body copy, panel sub-labels                */
+  --text-muted: #8a8a96;
+  /* hints, meta, placeholders                  */
+  --text-inverse: #ffffff;
+  /* text on dark surfaces                      */
 
-  --text-primary:  #e8f4fd;
-  --text-secondary: #7fa3c4;
-  --text-muted:    #4a7a9b;
+  --accent-strong: #111112;
+  /* primary button background, key highlights  */
+  --accent-medium: #3a3a42;
+  /* hover state of primary button              */
+  --accent-soft: #d1d1d8;
+  /* progress-bar fill, faint decorations       */
 
-  --accent-cyan:   #38d9f5;
-  --accent-blue:   #5c7cfa;
-  --accent-teal:   #0bc5ea;
+  --border-subtle: #e4e4e8;
+  /* card/panel borders                         */
+  --border-medium: #c8c8d0;
+  /* focused input rings, dividers              */
+  --border-strong: #8a8a96;
+  /* distinct separators                        */
 
-  /* Condition colours */
-  --color-hot:            #ff6b35;
-  --color-cold:           #74c0fc;
-  --color-wind:           #a9e34b;
-  --color-wet:            #4dabf7;
-  --color-uncomfortable:  #da77f2;
+  /* ── Shadows ─────────────────────────────────────────────────────────── */
+  --shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.06), 0 2px 12px rgba(0, 0, 0, 0.04);
+  --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lift: 0 4px 16px rgba(0, 0, 0, 0.12), 0 8px 32px rgba(0, 0, 0, 0.06);
 
-  /* Spacing scale */
-  --spacing-xs:  4px;
-  --spacing-sm:  8px;
-  --spacing-md:  16px;
-  --spacing-lg:  24px;
-  --spacing-xl:  40px;
+  /* ── Shape ────────────────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 
-  /* Borders */
-  --radius-sm:  8px;
-  --radius-md:  14px;
-  --radius-lg:  20px;
+  /* ── Spacing ──────────────────────────────────────────────────────────── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 36px;
+  --space-2xl: 56px;
 
-  /* Transitions */
-  --transition: 0.25s ease;
+  /* ── Transitions ──────────────────────────────────────────────────────── */
+  --transition: 0.18s ease;
 }
 
-/* ── Reset ───────────────────────────────────────────────────────────────── */
-*, *::before, *::after {
+/* ── Reset ────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -68,76 +92,84 @@ html {
 }
 
 body {
-  background: var(--bg-primary);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 217, 245, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 80%, rgba(92, 124, 250, 0.08) 0%, transparent 60%);
-  background-attachment: fixed;
+  background: var(--bg-app);
   color: var(--text-primary);
   min-height: 100vh;
   min-width: 320px;
 }
 
-/* ── Typography ──────────────────────────────────────────────────────────── */
+/* ── Typography ───────────────────────────────────────────────────────────── */
 h1 {
-  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-size: clamp(1.5rem, 2.8vw, 2.1rem);
   font-weight: 800;
-  line-height: 1.2;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--text-primary);
 }
 
 h2 {
-  font-size: 1rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
 }
 
 a {
-  color: var(--accent-cyan);
-  text-decoration: none;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
   transition: color var(--transition);
 }
+
 a:hover {
-  color: var(--accent-blue);
-  text-decoration: underline;
+  color: var(--text-primary);
 }
 
-/* ── Form elements ───────────────────────────────────────────────────────── */
+/* ── Form base ────────────────────────────────────────────────────────────── */
 input[type='text'],
 input[type='date'] {
   width: 100%;
-  padding: 10px 12px 10px 40px;
-  background: rgba(7, 17, 31, 0.7);
-  border: 1.5px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  padding: 10px 12px 10px 38px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 0.95rem;
-  transition: border-color var(--transition), box-shadow var(--transition);
   outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 input[type='text']:focus,
 input[type='date']:focus {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px rgba(56, 217, 245, 0.12);
+  border-color: var(--border-medium);
+  box-shadow: 0 0 0 3px rgba(17, 17, 18, 0.07);
+}
+
+input::placeholder {
+  color: var(--text-muted);
 }
 
 input[type='date']::-webkit-calendar-picker-indicator {
-  filter: invert(0.7) sepia(1) hue-rotate(170deg);
+  opacity: 0.4;
   cursor: pointer;
 }
 
-/* ── Scrollbar ───────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 7px; }
-::-webkit-scrollbar-track { background: var(--bg-primary); }
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--border-subtle);
   border-radius: 99px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-medium);
+}

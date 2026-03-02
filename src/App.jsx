@@ -104,27 +104,17 @@ function App() {
         <div className="header-inner">
           <div className="header-logo">
             <svg viewBox="0 0 40 40" fill="none" className="logo-svg" aria-hidden="true">
-              <circle cx="20" cy="20" r="18" stroke="url(#grad)" strokeWidth="2.5" fill="none" />
-              <circle cx="20" cy="20" r="10" fill="url(#grad)" opacity="0.3" />
-              {/* sun rays */}
+              <circle cx="20" cy="20" r="8" stroke="currentColor" strokeWidth="2.5" fill="none" />
               {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
-                const r1 = 13, r2 = 16;
+                const r1 = 12, r2 = 16;
                 const rad = (deg * Math.PI) / 180;
-                const x1 = 20 + r1 * Math.cos(rad);
-                const y1 = 20 + r1 * Math.sin(rad);
-                const x2 = 20 + r2 * Math.cos(rad);
-                const y2 = 20 + r2 * Math.sin(rad);
                 return (
-                  <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2}
-                    stroke="url(#grad)" strokeWidth="2" strokeLinecap="round" />
+                  <line key={deg}
+                    x1={20 + r1 * Math.cos(rad)} y1={20 + r1 * Math.sin(rad)}
+                    x2={20 + r2 * Math.cos(rad)} y2={20 + r2 * Math.sin(rad)}
+                    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
                 );
               })}
-              <defs>
-                <linearGradient id="grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#38d9f5" />
-                  <stop offset="100%" stopColor="#5c7cfa" />
-                </linearGradient>
-              </defs>
             </svg>
           </div>
           <div>

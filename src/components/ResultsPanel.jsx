@@ -1,6 +1,7 @@
 /**
  * @fileoverview ResultsPanel — displays climatology probabilities with
- * animated progress bars and colour-coded badges.
+ * animated progress bars. Monochrome: all inline condition colours removed;
+ * styling is handled entirely in App.css.
  */
 
 import WeatherIcon from './WeatherIcon.jsx';
@@ -35,7 +36,10 @@ export default function ResultsPanel({ results, loading, error }) {
             )}
 
             {!loading && !error && !results && (
-                <p className="hint">Select a location, date, and at least one condition, then click <strong>Compute Likelihood</strong>.</p>
+                <p className="hint">
+                    Select a location, date, and at least one condition, then click{' '}
+                    <strong>Compute Likelihood</strong>.
+                </p>
             )}
 
             {!loading && !error && results && (
@@ -63,21 +67,19 @@ export default function ResultsPanel({ results, loading, error }) {
                         {results.entries.map((entry) => (
                             <li key={entry.label} className="entry-row">
                                 <div className="entry-header">
-                                    <span className="entry-icon" style={{ color: entry.color }}>
+                                    {/* entry-icon class overrides any inline color via CSS */}
+                                    <span className="entry-icon">
                                         <WeatherIcon type={entry.icon} size={18} />
                                     </span>
                                     <span className="entry-label">{entry.label}</span>
-                                    <span className="entry-pct" style={{ color: entry.color }}>
+                                    <span className="entry-pct">
                                         {entry.probability}%
                                     </span>
                                 </div>
                                 <div className="progress-track">
                                     <div
                                         className="progress-fill"
-                                        style={{
-                                            '--fill-width': `${entry.probability}%`,
-                                            '--fill-color': entry.color,
-                                        }}
+                                        style={{ '--fill-width': `${entry.probability}%` }}
                                     />
                                 </div>
                                 <span className="entry-descriptor">
@@ -93,7 +95,7 @@ export default function ResultsPanel({ results, loading, error }) {
 }
 
 /**
- * Returns a human-readable qualitative descriptor for a probability percentage.
+ * Returns a human-readable descriptor for a probability percentage.
  * @param {number} pct
  * @returns {string}
  */
